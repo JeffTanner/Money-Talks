@@ -30,7 +30,11 @@ def formatTransactionForPrint(trans):
     transStr = ""
     transStr = str(trans[1]) + "/" + str(trans[2]) + "/" + str(trans[0]) + "\t"
     transStr += ' '.join(trans[4].split())+ "\t"
-    transStr += (("-" + str(trans[5])) if trans[5] != 0 else trans[6])
+    if float(trans[5]) > 0:
+        transStr += "-" + trans[5]
+    else:
+        transStr += trans[6]
+#    transStr += (("-" + str(trans[5])) if trans[5] > 0 else trans[6])
     return transStr
 
 def formatCategoryOptions():
@@ -58,7 +62,12 @@ def categorizeTransaction(trans):
         categId = input(inputStr)
         try:
             if int(categId) < len(allCategories):
-                should="setup the categ id and sub categ id and update the csv and db"
+                if len(allCategories[categId]) == 2:
+                    trans[7] = allCategories[categId][0]
+                    trans[8] = ''
+                else:
+                    trans[7] = allCategories[categId][1]
+                    trans[8] = allCategories[categId][0]
         except:
             categId = input("Please enter a number corresponding with the category. If the options were (0) - Gas  (1) - Food and it was gas, you would enter 0\n:")
     return trans
