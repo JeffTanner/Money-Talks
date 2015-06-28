@@ -26,7 +26,7 @@ subcategories = [
     ('6','3','other')
 ]
 categTransMatch = [
-    ('gas', '5'), 
+    ('gas', '5', ''), 
     ('WEGMANS', '2', '1'),
     ('SAFEWAY', '2', '1'),
     ('COCOS INTERNATIONAL', '2', '1'),
@@ -36,8 +36,8 @@ categTransMatch = [
     ('LOTTE', '2', '1'),
     ('7-ELEVEN', '2', '2'),
     ('FIVE GUYS', '2', '2'),
-    ('MICHAELS', '5'),
-    ('OFFICE DEPOT', '5'),
+    ('MICHAELS', '5', ''),
+    ('OFFICE DEPOT', '5', ''),
 ]
 def createCsv(fileName, header, content):
     with open(fileName, 'wb') as csvfile:
@@ -56,13 +56,14 @@ def setupDatabase():
     dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, date text, description text, debit real, credit real, category_id INTEGER, subcategory_id INTEGER)''')
     dbCur.execute('''CREATE TABLE categories (id INTEGER, category TEXT) ''')
     dbCur.execute('''CREATE TABLE subcategories (id INTEGER, category_id INTEGER, category TEXT) ''')
-    dbCur.execute('''CREATE TABLE matches (id INTEGER PRIMARY KEY, keyword TEXT, category_id INTEGER, subcategory_id TEXT) ''')
+    dbCur.execute('''CREATE TABLE matches (keyword TEXT, category_id INTEGER, subcategory_id INTEGER) ''')
     
     dbConn.commit()
     
-    dbCur.executemany('INSERT INTO categories (?,?)', categories)
-    dbCur.executemany('INSERT INTO subcategories (?,?,?)', subcategories)
-    dbCur.executemany('INSERT INTO matches (?,?,?)', categTransMatch)
+    dbCur.executemany('INSERT INTO categories VALUES (?,?)', categories)
+    dbCur.executemany('INSERT INTO subcategories VALUES (?,?,?)', subcategories)
+    dbCur.executemany('INSERT INTO matches VALUES (?,?,?)', categTransMatch)
+    dbConn.commit();
     
     dbConn.close()
 
