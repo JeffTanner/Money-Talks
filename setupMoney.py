@@ -25,7 +25,20 @@ subcategories = [
     ('5','3','rent'),
     ('6','3','other')
 ]
-
+categTransMatch = [
+    ('gas', '5'), 
+    ('WEGMANS', '2', '1'),
+    ('SAFEWAY', '2', '1'),
+    ('COCOS INTERNATIONAL', '2', '1'),
+    ('ALDI', '2', '1'),
+    ('GIANT', '2', '1'),
+    ('FOOD LION', '2', '1'),
+    ('LOTTE', '2', '1'),
+    ('7-ELEVEN', '2', '2'),
+    ('FIVE GUYS', '2', '2'),
+    ('MICHAELS', '5'),
+    ('OFFICE DEPOT', '5'),
+]
 def createCsv(fileName, header, content):
     with open(fileName, 'wb') as csvfile:
         csvWriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
@@ -55,7 +68,7 @@ def createFolderStructure(basePath):
         createCsv('banks.csv', ['bank prefix','Date','Check Number','Description','Debit','Credit'], [])
         createCsv('categories.csv', ['id','category'], categories)
         createCsv('subcategories.csv', ['sub_cat_id','cat_id','sub_cat'], subcategories)
-        createCsv('category-transaction_matching.csv', ['keyword','category','subcategory'],[['gas', '5', '3']])
+        createCsv('category-transaction_matching.csv', ['keyword','category','subcategory'],categTransMatch)
     
     curPath = os.path.join(basePath, appFolder, expFolder, dbFolder)
     if not os.path.exists(curPath):
