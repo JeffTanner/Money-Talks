@@ -56,7 +56,6 @@ def processBankStatement(data, schema):
         #TODO:: CATEGORIZE THE TRANSACTIONS
         
         for row in dbCur.execute("SELECT count(*) FROM purchases WHERE year=? AND month=? AND day=? AND check_num=? AND description=? AND debit=? AND credit=?", curEntry):
-            print row[0]
             if row[0] == 0:
                 dbCur.execute("INSERT INTO purchases (year, month, day, check_num, description, debit, credit) VALUES (" + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
                 dbConn.commit()

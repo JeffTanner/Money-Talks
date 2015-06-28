@@ -69,10 +69,21 @@ def setupDatabase(cat, subcat, matches, exists=True):
     
     dbConn.commit()
     
+    if exists == False:
+        dbCur.execute('''CREATE INDEX year_idx ON purchases(year) ''')
+        dbCur.execute('''CREATE INDEX month_idx ON purchases(month) ''')
+        dbCur.execute('''CREATE INDEX day_idx ON purchases(day) ''')
+        dbCur.execute('''CREATE INDEX check_num_idx ON purchases(check_num) ''')
+        dbCur.execute('''CREATE INDEX description_idx ON purchases(description) ''')
+        dbCur.execute('''CREATE INDEX debit_idx ON purchases(debit) ''')
+        dbCur.execute('''CREATE INDEX credit_idx ON purchases(credit) ''')
+    
     dbCur.executemany('INSERT INTO categories VALUES (?,?)', cat)
     dbCur.executemany('INSERT INTO subcategories VALUES (?,?,?)', subcat)
     dbCur.executemany('INSERT INTO matches VALUES (?,?,?)', matches)
     dbConn.commit();
+    
+    
     
     dbConn.close()
 
