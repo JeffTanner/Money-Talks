@@ -28,50 +28,56 @@ def readInCsv(csvFilePath):
 
 def categorizeTransaction(trans):
     for match in dbCur.execute("SELECT * FROM matches"):
-#        print trans[4]
-#        print match[0]
         if trans[4].lower().find(match[0].lower()) > -1:
-            print "found a match"
-#        print match[0]
-#        if 
+            trans[7] = match[1]
+            trans[8] = match[2]
+            break
+    return trans
 
 def processBankStatement(data, schema):
     global dbConn, dbCur
     entries = []
     for entry in data:
         curEntry = []
+        selEntry = []
         
         # Setup the date of the current transaction
         datePieces = entry[(int(schema[1])-1)].split('/');
-        curEntry.append(datePieces[2]) # Adding the year
-        curEntry.append(datePieces[0]) # Adding the month
-        curEntry.append(datePieces[1]) # Adding the day
+        curEntry.append(datePieces[2]) # Adding the year [0]
+        curEntry.append(datePieces[0]) # Adding the month [1]
+        curEntry.append(datePieces[1]) # Adding the day [2]
         
-        # Add the check number
+        # Add the check number [3]
         curEntry.append(entry[(int(schema[2])-1)])
         
-        # Add the description
+        # Add the description [4]
         curEntry.append(entry[(int(schema[3])-1)])
         
-        # Add the debit
+        # Add the debit [5]
         curEntry.append(entry[(int(schema[4])-1)])
         
-        # Add the credit
+        # Add the credit [6]
         curEntry.append(entry[(int(schema[5])-1)])
+        # create the object to be used in the SELECT statement
+        for part in curEntry:
+            selEntry.append(part)
+        
+        # Add default values for category [7] and subcategory [8] ids
+        curEntry.append(-999)
+        curEntry.append(-999)
         
         # Add the curEntry to the entries list
         entries.append(curEntry)
         
         #TODO:: CATEGORIZE THE TRANSACTIONS
         
-        for row in dbCur.execute("SELECT count(*) FROM purchases WHERE year=? AND month=? AND day=? AND check_num=? AND description=? AND debit=? AND credit=?", curEntry):
+        for row in dbCur.execute("SELECT count(*) FROM purchases WHERE year=? AND month=? AND day=? AND check_num=? AND description=? AND debit=? AND credit=?", selEntry):
             if row[0] == 0:
-                categorizeTransaction(curEntry)
-                dbCur.execute("INSERT INTO purchases (year, month, day, check_num, description, debit, credit) VALUES (?,?,?,?,?,?,?)", curEntry)# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
+                curEntry = categorizeTransaction(curEntry)
+                dbCur.execute("INSERT INTO purchases (year, month, day, check_num, description, debit, credit, category_id, subcategory_id) VALUES (?,?,?,?,?,?,?,?,?)", curEntry)# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
                 dbConn.commit()
                 
 #        dbConn.commit()
-#        print dbCur.rowcount
 #    dbCur.executemany("INSERT INTO purchases VALUES (year, month, day, description, debit, credit)", entries)
 #    dbConn.commit()
 
