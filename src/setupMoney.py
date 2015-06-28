@@ -11,11 +11,15 @@ dbName = "transactions.db"
 bankStateFolder = "Bank_Statements"
 statementSetupFolder = "setup"
 categories = [
-    ('1','Gas'),
+    ('1','Transportation'),
     ('2','Food'),
     ('3','living expenses'),
     ('4','Clothing'),
-    ('5','Other'),
+    ('5','Bank Transactions'),
+    ('6','Entertainment'),
+    ('7','Hobbies'),
+    ('8','Donations'),
+    ('9','Other'),
 ]
 subcategories = [
     ('1','2','grocery'),
@@ -23,10 +27,12 @@ subcategories = [
     ('3','3','insurance'),
     ('4','3','utilities'),
     ('5','3','rent'),
-    ('6','3','other')
+    ('6','3','other living expenses'),
+    ('7','5','Money Transfer'),
+    ('8','5','Deposit'),
+    ('9','5','Withdrawal')
 ]
 categTransMatch = [
-    ('gas', '5', ''), 
     ('WEGMANS', '2', '1'),
     ('SAFEWAY', '2', '1'),
     ('COCOS INTERNATIONAL', '2', '1'),
@@ -39,15 +45,20 @@ categTransMatch = [
     ('MICHAELS', '5', ''),
     ('OFFICE DEPOT', '5', ''),
 ]
-def createCsv(fileName, header, content):
-    with open(fileName, 'wb') as csvfile:
+def createCsv(fileName, header, content, useHeader=True):
+    openType = "wb"
+    if useHeader == False:
+        openType = "ab"
+    with open(fileName, openType) as csvfile:
         csvWriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
-        csvWriter.writerow(header)
+        if useHeader == True:
+            csvWriter.writerow(header)
         for row in content:
             csvWriter.writerow(row)
 #        del csvWriter
 
-
+def updateCsv(fileName, content):
+    createCsv(fileName, [], content, False)
 
 def setupDatabase(cat, subcat, matches, exists=True):
     #connect to/create the database
