@@ -62,7 +62,7 @@ def setupDatabase(cat, subcat, matches, exists=True):
     
     # add all appropriate tables
     if exists == False:
-        dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, date text, description text, debit real, credit real, category_id INTEGER, subcategory_id INTEGER)''')
+        dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, year INTEGER, month INTEGER, day INTEGER, check_num INTEGER, description text, debit real, credit real, category_id INTEGER, subcategory_id INTEGER)''')
     dbCur.execute('''CREATE TABLE categories (id INTEGER, category TEXT) ''')
     dbCur.execute('''CREATE TABLE subcategories (id INTEGER, category_id INTEGER, category TEXT) ''')
     dbCur.execute('''CREATE TABLE matches (keyword TEXT, category_id INTEGER, subcategory_id INTEGER) ''')
