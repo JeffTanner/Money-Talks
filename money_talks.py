@@ -15,4 +15,6 @@ options, args = parser.parse_args()
 if options.setupPath != None:
     print "Setting up 'Money Talks' folder structure . . ."
     setupMoney.createFolderStructure(options.setupPath)
-    print "Complete: Folder structure created in " + os.path.join(options.setupPath, setup.appFolder)
+    print "Complete: Folder structure created in " + os.path.join(options.setupPath, setupMoney.appFolder)
+else:
+    print "Now lets do some stuff"

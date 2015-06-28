@@ -56,8 +56,14 @@ def setupDatabase():
     dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, date text, description text, debit real, credit real, category_id INTEGER, subcategory_id INTEGER)''')
     dbCur.execute('''CREATE TABLE categories (id INTEGER, category TEXT) ''')
     dbCur.execute('''CREATE TABLE subcategories (id INTEGER, category_id INTEGER, category TEXT) ''')
+    dbCur.execute('''CREATE TABLE matches (id INTEGER PRIMARY KEY, keyword TEXT, category_id INTEGER, subcategory_id TEXT) ''')
     
     dbConn.commit()
+    
+    dbCur.executemany('INSERT INTO categories (?,?)', categories)
+    dbCur.executemany('INSERT INTO subcategories (?,?,?)', subcategories)
+    dbCur.executemany('INSERT INTO matches (?,?,?)', categTransMatch)
+    
     dbConn.close()
 
 def createFolderStructure(basePath):
@@ -68,7 +74,7 @@ def createFolderStructure(basePath):
         createCsv('banks.csv', ['bank prefix','Date','Check Number','Description','Debit','Credit'], [])
         createCsv('categories.csv', ['id','category'], categories)
         createCsv('subcategories.csv', ['sub_cat_id','cat_id','sub_cat'], subcategories)
-        createCsv('category-transaction_matching.csv', ['keyword','category','subcategory'],categTransMatch)
+        createCsv('category-transaction_matching.csv', ['keyword','category_id','subcategory_id'],categTransMatch)
     
     curPath = os.path.join(basePath, appFolder, expFolder, dbFolder)
     if not os.path.exists(curPath):
