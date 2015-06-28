@@ -26,6 +26,15 @@ def readInCsv(csvFilePath):
                 rows.append(row)
     return rows
 
+def categorizeTransaction(trans):
+    for match in dbCur.execute("SELECT * FROM matches"):
+#        print trans[4]
+#        print match[0]
+        if trans[4].lower().find(match[0].lower()) > -1:
+            print "found a match"
+#        print match[0]
+#        if 
+
 def processBankStatement(data, schema):
     global dbConn, dbCur
     entries = []
@@ -57,7 +66,8 @@ def processBankStatement(data, schema):
         
         for row in dbCur.execute("SELECT count(*) FROM purchases WHERE year=? AND month=? AND day=? AND check_num=? AND description=? AND debit=? AND credit=?", curEntry):
             if row[0] == 0:
-                dbCur.execute("INSERT INTO purchases (year, month, day, check_num, description, debit, credit) VALUES (" + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
+                categorizeTransaction(curEntry)
+                dbCur.execute("INSERT INTO purchases (year, month, day, check_num, description, debit, credit) VALUES (?,?,?,?,?,?,?)", curEntry)# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
                 dbConn.commit()
                 
 #        dbConn.commit()
