@@ -40,7 +40,9 @@ def setupDatabase():
     dbCur = dbConn.cursor()
     
     # add all appropriate tables
-    dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, date text, description text, debit real, credit real)''')
+    dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, date text, description text, debit real, credit real, category_id INTEGER, subcategory_id INTEGER)''')
+    dbCur.execute('''CREATE TABLE categories (id INTEGER, category TEXT) ''')
+    dbCur.execute('''CREATE TABLE subcategories (id INTEGER, category_id INTEGER, category TEXT) ''')
     
     dbConn.commit()
     dbConn.close()

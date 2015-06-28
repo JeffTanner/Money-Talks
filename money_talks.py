@@ -1,4 +1,4 @@
-import setup, os, sys, sqlite3, csv
+import setupMoney, os, sys, sqlite3, csv
 from optparse import OptionParser
 
 __author__ = "Tannerism"
@@ -14,5 +14,5 @@ options, args = parser.parse_args()
 # if the setup flag was passed it will create the necessary folder structure
 if options.setupPath != None:
     print "Setting up 'Money Talks' folder structure . . ."
-    setup.createFolderStructure(options.setupPath)
+    setupMoney.createFolderStructure(options.setupPath)
     print "Complete: Folder structure created in " + os.path.join(options.setupPath, setup.appFolder)
