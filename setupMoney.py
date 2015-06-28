@@ -47,27 +47,37 @@ def createCsv(fileName, header, content):
             csvWriter.writerow(row)
 #        del csvWriter
 
-def setupDatabase():
+
+
+def setupDatabase(cat, subcat, matches, exists=True):
     #connect to/create the database
     dbConn = sqlite3.connect(dbName)
     dbCur = dbConn.cursor()
     
+    # drop the tables is they already exist
+    dbCur.execute('''DROP TABLE IF EXISTS categories ''')
+    dbCur.execute('''DROP TABLE IF EXISTS subcategories ''')
+    dbCur.execute('''DROP TABLE IF EXISTS matches ''')
+    dbConn.commit()
+    
     # add all appropriate tables
-    dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, date text, description text, debit real, credit real, category_id INTEGER, subcategory_id INTEGER)''')
+    if exists == False:
+        dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, date text, description text, debit real, credit real, category_id INTEGER, subcategory_id INTEGER)''')
     dbCur.execute('''CREATE TABLE categories (id INTEGER, category TEXT) ''')
     dbCur.execute('''CREATE TABLE subcategories (id INTEGER, category_id INTEGER, category TEXT) ''')
     dbCur.execute('''CREATE TABLE matches (keyword TEXT, category_id INTEGER, subcategory_id INTEGER) ''')
     
     dbConn.commit()
     
-    dbCur.executemany('INSERT INTO categories VALUES (?,?)', categories)
-    dbCur.executemany('INSERT INTO subcategories VALUES (?,?,?)', subcategories)
-    dbCur.executemany('INSERT INTO matches VALUES (?,?,?)', categTransMatch)
+    dbCur.executemany('INSERT INTO categories VALUES (?,?)', cat)
+    dbCur.executemany('INSERT INTO subcategories VALUES (?,?,?)', subcat)
+    dbCur.executemany('INSERT INTO matches VALUES (?,?,?)', matches)
     dbConn.commit();
     
     dbConn.close()
 
 def createFolderStructure(basePath):
+    global categories, subcategories, categTransMatch
     curPath = os.path.join(basePath, appFolder, expFolder, bankStateFolder, statementSetupFolder)
     if not os.path.exists(curPath):
         os.makedirs(curPath)
@@ -83,4 +93,4 @@ def createFolderStructure(basePath):
     
     os.chdir(curPath)
     if not os.path.exists(os.path.join(basePath, appFolder, expFolder, dbFolder, dbName)):
-        setupDatabase()
+        setupDatabase(categories, subcategories, categTransMatch, False)
