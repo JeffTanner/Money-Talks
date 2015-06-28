@@ -44,6 +44,35 @@ def formatCategoryOptions():
         categStr += allCategories[i][(len(allCategories[i])-1)] + ";  "
     return categStr
 
+def queryUserForCategory(trans):
+    isMatched = False
+    inputStr = '\nPlease enter the number corresponding to the the category for this entry: '
+    inputStr += "\n----------  TRANSACTION:  ----------\n"
+    inputStr += formatTransactionForPrint(trans) 
+    inputStr += "\n----------  CATEGORIES:  ----------\n"
+    inputStr += formatCategoryOptions() 
+    inputStr += "\n:"
+    categId = ''
+    try:
+        categId = input(inputStr)
+        if int(categId) < len(allCategories):
+            isMatched = True
+            if len(allCategories[categId]) == 2:
+                trans[7] = allCategories[categId][0]
+                trans[8] = ''
+            else:
+                trans[7] = allCategories[categId][1]
+                trans[8] = allCategories[categId][0]
+            setupMoney.updateCsv('setup/category-transaction_matching.csv', [[trans[4], trans[7], trans[8]]])
+            dbCur.execute("INSERT INTO matches VALUES (?,?,?)", [trans[4], trans[7], trans[8]])# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
+            dbConn.commit()
+
+    except Exception, e:
+        print e
+        isMatched = False
+        print "::INVALID CATEGORY-ENTER THE NUMBER CORRESPONDING TO THE CATEGORY::" + str(categId)
+    return {'trans': trans, 'isMatched':isMatched}
+
 def categorizeTransaction(trans):
     isMatched = False
     for match in dbCur.execute("SELECT * FROM matches"):
@@ -52,29 +81,13 @@ def categorizeTransaction(trans):
             trans[8] = match[2]
             isMatched = True
             break
-    if isMatched == False:
-        inputStr = '\nPlease enter the number corresponding to the the category for this entry: '
-        inputStr += "\n----------  TRANSACTION:  ----------\n"
-        inputStr += formatTransactionForPrint(trans) 
-        inputStr += "\n----------  CATEGORIES:  ----------\n"
-        inputStr += formatCategoryOptions() 
-        inputStr += "\n:"
-        categId = input(inputStr)
-        try:
-            if int(categId) < len(allCategories):
-                if len(allCategories[categId]) == 2:
-                    trans[7] = allCategories[categId][0]
-                    trans[8] = ''
-                else:
-                    trans[7] = allCategories[categId][1]
-                    trans[8] = allCategories[categId][0]
-        except:
-            categId = input("Please enter a number corresponding with the category. If the options were (0) - Gas  (1) - Food and it was gas, you would enter 0\n:")
-    return trans
+
+    return {'trans':trans, 'isMatched': isMatched}
 
 def processBankStatement(data, schema):
     global dbConn, dbCur
     entries = []
+    print data
     for entry in data:
         curEntry = []
         selEntry = []
@@ -108,12 +121,15 @@ def processBankStatement(data, schema):
         entries.append(curEntry)
         
         #TODO:: CATEGORIZE THE TRANSACTIONS
-        
         for row in dbCur.execute("SELECT count(*) FROM purchases WHERE year=? AND month=? AND day=? AND check_num=? AND description=? AND debit=? AND credit=?", selEntry):
             if row[0] == 0:
-                curEntry = categorizeTransaction(curEntry)
+                result = categorizeTransaction(curEntry)
+                while result['isMatched'] == False:
+                    result = queryUserForCategory(curEntry)
+                curEntry = result['trans']
                 dbCur.execute("INSERT INTO purchases (year, month, day, check_num, description, debit, credit, category_id, subcategory_id) VALUES (?,?,?,?,?,?,?,?,?)", curEntry)# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
                 dbConn.commit()
+                
                 
 #        dbConn.commit()
 #    dbCur.executemany("INSERT INTO purchases VALUES (year, month, day, description, debit, credit)", entries)
@@ -165,7 +181,6 @@ else:
     bankSchema = readInCsv('banks.csv')
     os.chdir('../')
     statements = [ f for f in listdir(os.getcwd()) if isfile(join(os.getcwd(),f)) ]
-    
     for indvStat in statements:
         for bank in bankSchema:
             if indvStat.lower().find(bank[0].lower()) > -1:
