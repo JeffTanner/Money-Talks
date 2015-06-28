@@ -8,7 +8,7 @@ __date__ = "$Jun 27, 2015 7:45:55 PM$"
 
 dbConn = ""
 dbCur = ""
-
+allCategories = []
 
 def readInCsv(csvFilePath):
     rows = []
@@ -65,10 +65,24 @@ def processBankStatement(data, schema):
 #    dbCur.executemany("INSERT INTO purchases VALUES (year, month, day, description, debit, credit)", entries)
 #    dbConn.commit()
 
+def createAllCategoriesTable(categ, subcateg):
+    global allCategories
+    dontUse = {}
+    for sub in subcateg:
+        dontUse[sub[1]] = sub[2]
+        allCategories.append(sub)
+    for cat in categ:
+        try:
+            if dontUse[cat[0]] == None:
+                allCategories.append(cat)
+        except:
+            allCategories.append(cat)
+
 def setupDatabase():
     global dbConn, dbCur
     categories = readInCsv('categories.csv')
     subcategories = readInCsv('subcategories.csv')
+    createAllCategoriesTable(categories, subcategories)
     matches = readInCsv('category-transaction_matching.csv')
     os.chdir('../../.db')
     setupMoney.setupDatabase(categories, subcategories, matches)
