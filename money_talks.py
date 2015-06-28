@@ -1,5 +1,7 @@
 import setupMoney, os, sys, sqlite3, csv
 from optparse import OptionParser
+from os import listdir
+from os.path import isfile, join
 
 __author__ = "Tannerism"
 __date__ = "$Jun 27, 2015 7:45:55 PM$"
@@ -17,12 +19,10 @@ def readInCsv(csvFilePath):
             if header == None:
                 header = row
                 rowLen = len(header)
-                print str(rowLen)
             else:
                 while len(row) < rowLen:
                     row.append('')
                 rows.append(row)
-                print row
     return rows
 
 def setupDatabase():
@@ -33,7 +33,6 @@ def setupDatabase():
     subcategories = readInCsv('subcategories.csv')
     matches = readInCsv('category-transaction_matching.csv')
     os.chdir('../../.db')
-    print tuple(categories)
     setupMoney.setupDatabase(categories, subcategories, matches)
 
 parser = OptionParser()
@@ -47,10 +46,23 @@ if options.setupPath != None:
     setupMoney.createFolderStructure(options.setupPath)
     print "Complete: Folder structure created in " + os.path.join(options.setupPath, setupMoney.appFolder)
 else:
-    print "Now lets do some stuff"
+    print "Updating based on user settings . . . "
     
     # Read in the various tables and replace the tables in the database with them
     os.chdir("C:/Users/Tannerism/Documents/Money_Talks/Expenses/Bank_Statements/setup")
     setupDatabase()
+    os.chdir('../Bank_Statements/setup')
+    print "Reading in your bank statements . . . "
     # Read in the bank statement and start categorizing
+    bankSchema = readInCsv('banks.csv')
+    print bankSchema
+    os.chdir('../')
+    statements = [ f for f in listdir(os.getcwd()) if isfile(join(os.getcwd(),f)) ]
+    
+    for indvStat in statements:
+        for bank in bankSchema:
+            if indvStat.lower().find(bank[0].lower()) > -1:
+                print indvStat + " found " + bank[0]
+                break
+    print statements
     # Prompt user if it doesn't know where to put something
