@@ -44,7 +44,7 @@ def formatCategoryOptions():
         categStr += allCategories[i][(len(allCategories[i])-1)] + ";  "
     return categStr
 
-def queryUserForCategory(trans):
+def queryUserForCategory(trans, alwaysShow):
     isMatched = False
     inputStr = '\nPlease enter the number corresponding to the the category for this entry: '
     inputStr += "\n----------  TRANSACTION:  ----------\n"
@@ -63,31 +63,39 @@ def queryUserForCategory(trans):
             else:
                 trans[7] = allCategories[categId][1]
                 trans[8] = allCategories[categId][0]
-            setupMoney.updateCsv('setup/category-transaction_matching.csv', [[trans[4], trans[7], trans[8]]])
-            dbCur.execute("INSERT INTO matches VALUES (?,?,?)", [trans[4], trans[7], trans[8]])# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
-            dbConn.commit()
+            if alwaysShow != 1:
+                desc = input("Please enter the name to store for future categorizing (surround with quotes):\nExample: \nFrom bank statement: MY STORE 0154 OMAHA\nName for future categorizing: \"MY STORE\"\nTo keep the bank statement description enter 0 \n:")
+                if desc == 0:
+                    desc = trans[4]
+                setupMoney.updateCsv('setup/category-transaction_matching.csv', [[desc, trans[7], trans[8], 0]])
+                dbCur.execute("INSERT INTO matches VALUES (?,?,?,?)", [desc, trans[7], trans[8], 0])# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
+                dbConn.commit()
 
     except Exception, e:
         print e
         isMatched = False
         print "::INVALID CATEGORY-ENTER THE NUMBER CORRESPONDING TO THE CATEGORY::" + str(categId)
-    return {'trans': trans, 'isMatched':isMatched}
+    return {'trans': trans, 'isMatched':isMatched, 'alwaysShow': alwaysShow}
 
 def categorizeTransaction(trans):
     isMatched = False
+    alwaysShow = 0
     for match in dbCur.execute("SELECT * FROM matches"):
         if trans[4].lower().find(match[0].lower()) > -1:
             trans[7] = match[1]
             trans[8] = match[2]
-            isMatched = True
+            alwaysShow = match[3]
+            if alwaysShow == 1:
+                isMatched = False
+            else:
+                isMatched = True
             break
 
-    return {'trans':trans, 'isMatched': isMatched}
+    return {'trans':trans, 'isMatched': isMatched, 'alwaysShow':alwaysShow}
 
 def processBankStatement(data, schema):
     global dbConn, dbCur
     entries = []
-    print data
     for entry in data:
         curEntry = []
         selEntry = []
@@ -125,7 +133,7 @@ def processBankStatement(data, schema):
             if row[0] == 0:
                 result = categorizeTransaction(curEntry)
                 while result['isMatched'] == False:
-                    result = queryUserForCategory(curEntry)
+                    result = queryUserForCategory(curEntry, result['alwaysShow'])
                 curEntry = result['trans']
                 dbCur.execute("INSERT INTO purchases (year, month, day, check_num, description, debit, credit, category_id, subcategory_id) VALUES (?,?,?,?,?,?,?,?,?)", curEntry)# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
                 dbConn.commit()
