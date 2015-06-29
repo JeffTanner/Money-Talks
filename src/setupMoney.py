@@ -20,6 +20,7 @@ categories = [
     ('7','Hobbies'),
     ('8','Donations'),
     ('9','Other'),
+    ('10','Credit Card'),
 ]
 subcategories = [
     ('1','2','grocery'),
@@ -33,17 +34,17 @@ subcategories = [
     ('9','5','Withdrawal')
 ]
 categTransMatch = [
-    ('WEGMANS', '2', '1'),
-    ('SAFEWAY', '2', '1'),
-    ('COCOS INTERNATIONAL', '2', '1'),
-    ('ALDI', '2', '1'),
-    ('GIANT', '2', '1'),
-    ('FOOD LION', '2', '1'),
-    ('LOTTE', '2', '1'),
-    ('7-ELEVEN', '2', '2'),
-    ('FIVE GUYS', '2', '2'),
-    ('MICHAELS', '5', ''),
-    ('OFFICE DEPOT', '5', ''),
+    ('WEGMANS', '2', '1','0'),
+    ('SAFEWAY', '2', '1','0'),
+    ('COCOS INTERNATIONAL', '2', '1','0'),
+    ('ALDI', '2', '1','0'),
+    ('GIANT', '2', '1','0'),
+    ('FOOD LION', '2', '1','0'),
+    ('LOTTE', '2', '1','0'),
+    ('7-ELEVEN', '2', '2','0'),
+    ('FIVE GUYS', '2', '2','0'),
+    ('MICHAELS', '5', '','0'),
+    ('OFFICE DEPOT', '5', '','0')
 ]
 def createCsv(fileName, header, content, useHeader=True):
     openType = "wb"
@@ -76,7 +77,7 @@ def setupDatabase(cat, subcat, matches, exists=True):
         dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, year INTEGER, month INTEGER, day INTEGER, check_num INTEGER, description text, debit real, credit real, category_id INTEGER, subcategory_id INTEGER)''')
     dbCur.execute('''CREATE TABLE categories (id INTEGER, category TEXT) ''')
     dbCur.execute('''CREATE TABLE subcategories (id INTEGER, category_id INTEGER, category TEXT) ''')
-    dbCur.execute('''CREATE TABLE matches (keyword TEXT, category_id INTEGER, subcategory_id INTEGER) ''')
+    dbCur.execute('''CREATE TABLE matches (keyword TEXT, category_id INTEGER, subcategory_id INTEGER, always_show INTEGER) ''')
     
     dbConn.commit()
     
@@ -91,7 +92,7 @@ def setupDatabase(cat, subcat, matches, exists=True):
     
     dbCur.executemany('INSERT INTO categories VALUES (?,?)', cat)
     dbCur.executemany('INSERT INTO subcategories VALUES (?,?,?)', subcat)
-    dbCur.executemany('INSERT INTO matches VALUES (?,?,?)', matches)
+    dbCur.executemany('INSERT INTO matches VALUES (?,?,?,?)', matches)
     dbConn.commit();
     
     
@@ -107,7 +108,7 @@ def createFolderStructure(basePath):
         createCsv('banks.csv', ['bank prefix','Date','Check Number','Description','Debit','Credit'], [])
         createCsv('categories.csv', ['id','category'], categories)
         createCsv('subcategories.csv', ['sub_cat_id','cat_id','sub_cat'], subcategories)
-        createCsv('category-transaction_matching.csv', ['keyword','category_id','subcategory_id'],categTransMatch)
+        createCsv('category-transaction_matching.csv', ['keyword','category_id','subcategory_id', 'always_ask'],categTransMatch)
     
     curPath = os.path.join(basePath, appFolder, expFolder, dbFolder)
     if not os.path.exists(curPath):
