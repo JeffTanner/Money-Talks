@@ -21,6 +21,7 @@ categories = [
     ('8','Donations'),
     ('9','Other'),
     ('10','Credit Card'),
+    ('11','Medical')
 ]
 subcategories = [
     ('1','2','grocery'),
