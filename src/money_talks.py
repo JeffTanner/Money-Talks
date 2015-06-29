@@ -30,11 +30,13 @@ def formatTransactionForPrint(trans):
     transStr = ""
     transStr = str(trans[1]) + "/" + str(trans[2]) + "/" + str(trans[0]) + "\t"
     transStr += ' '.join(trans[4].split())+ "\t"
-    if float(trans[5]) > 0:
-        transStr += "-" + trans[5]
-    else:
-        transStr += trans[6]
-#    transStr += (("-" + str(trans[5])) if trans[5] > 0 else trans[6])
+    if trans[6] == '':
+        transStr += trans[5]
+    else: 
+        if float(trans[5]) > 0:
+            transStr += "-" + trans[5]
+        else:
+            transStr += trans[6]
     return transStr
 
 def formatCategoryOptions():
@@ -107,7 +109,10 @@ def processBankStatement(data, schema):
         curEntry.append(datePieces[1]) # Adding the day [2]
         
         # Add the check number [3]
-        curEntry.append(entry[(int(schema[2])-1)])
+        try:
+            curEntry.append(entry[(int(schema[2])-1)])
+        except:
+            curEntry.append('')
         
         # Add the description [4]
         curEntry.append(entry[(int(schema[3])-1)])
@@ -116,11 +121,13 @@ def processBankStatement(data, schema):
         curEntry.append(entry[(int(schema[4])-1)])
         
         # Add the credit [6]
-        curEntry.append(entry[(int(schema[5])-1)])
+        try:
+            curEntry.append(entry[(int(schema[5])-1)])
+        except:
+            curEntry.append('')
         # create the object to be used in the SELECT statement
         for part in curEntry:
             selEntry.append(part)
-        
         # Add default values for category [7] and subcategory [8] ids
         curEntry.append(-999)
         curEntry.append(-999)
