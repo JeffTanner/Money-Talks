@@ -6,6 +6,7 @@ __date__ = "$Jun 27, 2015 7:46:45 PM$"
     
 appFolder = "Money_Talks"
 expFolder = "Expenses"
+exportFolder = "Export"
 dbFolder = ".db"
 dbName = "transactions.db"
 bankStateFolder = "Bank_Statements"
@@ -104,6 +105,9 @@ def setupDatabase(cat, subcat, matches, exists=True):
 
 def createFolderStructure(basePath):
     global categories, subcategories, categTransMatch
+    curPath = os.path.join(basePath, appFolder, exportFolder)
+    if not os.path.exists(curPath):
+        os.makedirs(curPath)
     curPath = os.path.join(basePath, appFolder, expFolder, bankStateFolder, statementSetupFolder)
     if not os.path.exists(curPath):
         os.makedirs(curPath)
