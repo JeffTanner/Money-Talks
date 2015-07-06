@@ -75,10 +75,11 @@ def setupDatabase(cat, subcat, matches, exists=True):
     
     # add all appropriate tables
     if exists == False:
-        dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, year INTEGER, month INTEGER, day INTEGER, check_num INTEGER, description text, debit real, credit real, category_id INTEGER, subcategory_id INTEGER)''')
+        dbCur.execute('''CREATE TABLE purchases (id INTEGER PRIMARY KEY, year INTEGER, month INTEGER, day INTEGER, check_num INTEGER, description text, debit real, credit real, category_id INTEGER, subcategory_id INTEGER, match_id INTEGER, notes TEXT)''')
     dbCur.execute('''CREATE TABLE categories (id INTEGER, category TEXT) ''')
     dbCur.execute('''CREATE TABLE subcategories (id INTEGER, category_id INTEGER, category TEXT) ''')
-    dbCur.execute('''CREATE TABLE matches (keyword TEXT, category_id INTEGER, subcategory_id INTEGER, always_show INTEGER) ''')
+    dbCur.execute('''CREATE TABLE matches (id INTEGER PRIMARY KEY, keyword TEXT, category_id INTEGER, subcategory_id INTEGER, always_show INTEGER) ''')
+#    dbCur.execute('''CREATE TABLE folder_path (path TEXT) ''')
     
     dbConn.commit()
     
@@ -93,7 +94,8 @@ def setupDatabase(cat, subcat, matches, exists=True):
     
     dbCur.executemany('INSERT INTO categories VALUES (?,?)', cat)
     dbCur.executemany('INSERT INTO subcategories VALUES (?,?,?)', subcat)
-    dbCur.executemany('INSERT INTO matches VALUES (?,?,?,?)', matches)
+    dbCur.executemany('INSERT INTO matches (keyword, category_id, subcategory_id, always_show) VALUES (?,?,?,?)', matches)
+#    dbCur.executemany('INSERT INTO folder_path VALUES (?)', [os.getcwd()])
     dbConn.commit();
     
     
