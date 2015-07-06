@@ -74,16 +74,16 @@ def queryUserForCategory(trans, alwaysShow):
             else:
                 trans[7] = allCategories[categId][1]
                 trans[8] = allCategories[categId][0]
-            trans[9] = matchesLen
             if alwaysShow != 1:
-                desc = input("Please enter the name to store for future categorizing (surround with quotes):\nExample: \nFrom bank statement: MY STORE 0154 OMAHA\nName for future categorizing: \"MY STORE\"\nTo keep the bank statement description enter 0 \n:")
+                trans[9] = matchesLen
+                desc = raw_input("Please enter the name to store for future categorizing:\nExample: \nFrom bank statement: MY STORE 0154 OMAHA\nName for future categorizing: MY STORE\nTo keep the bank statement description enter 0 \n:")
                 if desc == 0:
                     desc = trans[4]
                 setupMoney.updateCsv('setup/category-transaction_matching.csv', [[desc, trans[7], trans[8], 0]])
                 dbCur.execute("INSERT INTO matches (keyword, category_id, subcategory_id, always_show) VALUES (?,?,?,?)", [desc, trans[7], trans[8], 0])# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
                 dbConn.commit()
             else:
-                notes = input("Please enter transaction details and surround with quotes. \nExample: \"watch, shoes, and belt for Bobby\"\n:")
+                notes = raw_input("Please enter transaction details. \nExample: watch, shoes, and belt for Bobby\n:")
                 trans[10] = notes
                     
 
