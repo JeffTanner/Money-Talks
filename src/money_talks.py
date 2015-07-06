@@ -163,18 +163,21 @@ def createAllCategoriesTable(categ, subcateg):
         except:
             allCategories.append(cat)
 
-def setupDatabase():
+def setupDatabase(dontReset=True):
     global dbConn, dbCur
     categories = readInCsv('categories.csv')
     subcategories = readInCsv('subcategories.csv')
     createAllCategoriesTable(categories, subcategories)
     matches = readInCsv('category-transaction_matching.csv')
     os.chdir('../../.db')
-    setupMoney.setupDatabase(categories, subcategories, matches)
+    if dontReset == False and os.path.exists(setupMoney.dbName):
+        os.remove(setupMoney.dbName)
+    setupMoney.setupDatabase(categories, subcategories, matches, dontReset)
     dbConn = sqlite3.connect('transactions.db')
     dbCur = dbConn.cursor()
 
 parser = OptionParser()
+parser.add_option("-r", "--reset", action="store_false", default=True, help="reset the database and recategorize based on the updated CSV files")
 parser.add_option("-s", "--setup", dest="setupPath", help="Setup the folder structure for the Money_Talks application", metavar="SETUP")
 
 options, args = parser.parse_args()
@@ -189,7 +192,7 @@ else:
     
     # Read in the various tables and replace the tables in the database with them
     os.chdir("C:/Users/Tannerism/Documents/Money_Talks/Expenses/Bank_Statements/setup")
-    setupDatabase()
+    setupDatabase(options.reset)
     os.chdir('../Bank_Statements/setup')
     print "Reading in your bank statements . . . "
     # Read in the bank statement and start categorizing
