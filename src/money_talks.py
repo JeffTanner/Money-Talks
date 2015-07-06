@@ -193,17 +193,17 @@ def setupDatabase(dontReset=True):
     subcategories = readInCsv('subcategories.csv')
     createAllCategoriesTable(categories, subcategories)
     matches = readInCsv('category-transaction_matching.csv')
-    os.chdir('../../.db')
+    os.chdir('../../' + setupMoney.dbFolder)
     if dontReset == False and os.path.exists(setupMoney.dbName):
         os.remove(setupMoney.dbName)
     setupMoney.setupDatabase(categories, subcategories, matches, dontReset)
-    dbConn = sqlite3.connect('transactions.db')
+    dbConn = sqlite3.connect(setupMoney.dbName)
     dbCur = dbConn.cursor()
 
 parser = OptionParser()
 parser.add_option("-r", "--reset", action="store_false", default=True, help="reset the database and recategorize based on the updated CSV files")
 parser.add_option("-s", "--setup", dest="setupPath", help="Setup the folder structure for the Money_Talks application", metavar="SETUP")
-parser.add_option("-e", "--export", dest="exportPath", help="Export the data (as .json) for use in an HTML product", metavar="SETUP")
+parser.add_option("-e", "--export", action="store_true", default=False, help="Export the data (as .json) for use in an HTML product into the 'Export' folder", metavar="SETUP")
 
 options, args = parser.parse_args()
 
@@ -214,11 +214,14 @@ if options.setupPath != None:
     print "Complete: Folder structure created in " + os.path.join(options.setupPath, setupMoney.appFolder)
 elif len(args) == 1:
     basePath = args[0];
-    os.chdir(os.path.join(basePath, "Expenses", "Bank_Statements", "setup"))
     
-    if options.exportPath != None:
-        exportJson(options.exportPath)
+    if options.export == True:
+        os.chdir(os.path.join(basePath, setupMoney.expFolder, setupMoney.dbFolder))
+        dbConn = sqlite3.connect(setupMoney.dbName)
+        dbCur = dbConn.cursor()
+        exportJson()
     else:
+        os.chdir(os.path.join(basePath, setupMoney.expFolder, setupMoney.bankStateFolder, setupMoney.statementSetupFolder))
         print "Updating based on user settings . . . "
         # Read in the various tables and replace the tables in the database with them
         setupDatabase(options.reset)
