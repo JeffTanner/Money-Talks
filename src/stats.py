@@ -65,16 +65,11 @@ def aggregateByAttr(pur, attr):
     except:
         aggregate[attr][pur[attr]] = {'total':{'debit':0, 'credit':0}, 
     'byYear':{}}
-#        print pur
-#        print pur['debit']
     curTotals = calculateTotals(pur, curTotals)
-#        print curTotals
-#    print curTotals
     aggregate[attr][pur[attr]] = curTotals
-#    print aggregate
-#        categories[pur['category']].append()
 
 def aggregateByTime(pur):
+    global aggregate
     curTotals = {'total':{'debit':0, 'credit':0}, 
     'byYear':{}}
     try:
@@ -91,12 +86,7 @@ def aggregateData(purchases):
     #   match/store
     #   subcategory
     #   month/year
-    aggregates = {}
-    categories = {}
-    store_match = {}
-    subcategory = {}
-    month_year = {}
-    
+    global aggregate
     for pur in purchases:
         aggregateByAttr(pur,'category')
         aggregateByAttr(pur,'subcategory')
