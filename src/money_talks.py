@@ -1,4 +1,4 @@
-import setupMoney, os, sys, sqlite3, csv
+import setupMoney, os, sys, sqlite3, csv, json
 from optparse import OptionParser
 from os import listdir
 from os.path import isfile, join
@@ -39,19 +39,12 @@ def exportJson():
     
     for row in dbCur.execute("SELECT * FROM matches"):
         matches[row[0]] = row[1]
-#        print row[1]
-#    print matches
     
     for row in dbCur.execute("SELECT * FROM categories"):
         categories[row[0]] = row[1]
-#        print row
-#    print categories
-#    print matches
     
     for row in dbCur.execute("SELECT * FROM subcategories"):
         subCategories[row[0]] = row[2]
-#        print row
-#    print subCategories
     
     for row in dbCur.execute("SELECT * FROM purchases"):
 #        print row
@@ -74,9 +67,11 @@ def exportJson():
         except:
             transObj['match'] = ''
         transObj['notes'] = row[11]
-#        print transObj
         purchases.append(transObj)
-    print purchases
+
+    os.chdir(os.path.join(basePath, setupMoney.exportFolder))
+    with open('money-talks.json', 'w') as jsonFile:
+        json.dump(purchases, jsonFile)
 
 def formatTransactionForPrint(trans):
     transStr = ""
