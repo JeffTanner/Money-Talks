@@ -1,4 +1,4 @@
-import setupMoney, os, sys, sqlite3, csv
+import setupMoney, os, sys, sqlite3, csv, json
 from optparse import OptionParser
 from os import listdir
 from os.path import isfile, join
@@ -9,6 +9,11 @@ __date__ = "$Jun 27, 2015 7:45:55 PM$"
 dbConn = ""
 dbCur = ""
 allCategories = []
+basePath = ""
+# matchesLen stores the current length of the matches table, so when
+# assigning the match_id to a new entry, it takes the matchesLen and adds 1
+# which will be the id of the newly created entry in the matches table
+matchesLen = 0
 
 def readInCsv(csvFilePath):
     rows = []
@@ -25,6 +30,48 @@ def readInCsv(csvFilePath):
                     row.append('')
                 rows.append(row)
     return rows
+
+def exportJson():
+    matches = {}
+    categories = {}
+    subCategories = {}
+    purchases = []
+    
+    for row in dbCur.execute("SELECT * FROM matches"):
+        matches[row[0]] = row[1]
+    
+    for row in dbCur.execute("SELECT * FROM categories"):
+        categories[row[0]] = row[1]
+    
+    for row in dbCur.execute("SELECT * FROM subcategories"):
+        subCategories[row[0]] = row[2]
+    
+    for row in dbCur.execute("SELECT * FROM purchases"):
+#        print row
+        transObj = {}
+        transObj['id'] = row[0]
+        transObj['year'] = row[1]
+        transObj['month'] = row[2]
+        transObj['day'] = row[3]
+        transObj['check_num'] = row[4]
+        transObj['description'] = row[5]
+        transObj['debit'] = row[6]
+        transObj['credit'] = row[7]
+        transObj['category'] = categories[row[8]]
+        try:
+            transObj['subcategory'] = subCategories[row[9]]
+        except:
+            transObj['subcategory'] = ''
+        try:
+            transObj['match'] = matches[row[10]]
+        except:
+            transObj['match'] = ''
+        transObj['notes'] = row[11]
+        purchases.append(transObj)
+
+    os.chdir(os.path.join(basePath, setupMoney.exportFolder))
+    with open('money-talks.json', 'w') as jsonFile:
+        json.dump(purchases, jsonFile)
 
 def formatTransactionForPrint(trans):
     transStr = ""
@@ -66,12 +113,17 @@ def queryUserForCategory(trans, alwaysShow):
                 trans[7] = allCategories[categId][1]
                 trans[8] = allCategories[categId][0]
             if alwaysShow != 1:
-                desc = input("Please enter the name to store for future categorizing (surround with quotes):\nExample: \nFrom bank statement: MY STORE 0154 OMAHA\nName for future categorizing: \"MY STORE\"\nTo keep the bank statement description enter 0 \n:")
+                trans[9] = matchesLen
+                desc = raw_input("Please enter the name to store for future categorizing:\nExample: \nFrom bank statement: MY STORE 0154 OMAHA\nName for future categorizing: MY STORE\nTo keep the bank statement description enter 0 \n:")
                 if desc == 0:
                     desc = trans[4]
                 setupMoney.updateCsv('setup/category-transaction_matching.csv', [[desc, trans[7], trans[8], 0]])
-                dbCur.execute("INSERT INTO matches VALUES (?,?,?,?)", [desc, trans[7], trans[8], 0])# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
+                dbCur.execute("INSERT INTO matches (keyword, category_id, subcategory_id, always_show) VALUES (?,?,?,?)", [desc, trans[7], trans[8], 0])# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
                 dbConn.commit()
+            else:
+                notes = raw_input("Please enter transaction details. \nExample: watch, shoes, and belt for Bobby\n:")
+                trans[10] = notes
+                    
 
     except Exception, e:
         print e
@@ -83,10 +135,11 @@ def categorizeTransaction(trans):
     isMatched = False
     alwaysShow = 0
     for match in dbCur.execute("SELECT * FROM matches"):
-        if trans[4].lower().find(match[0].lower()) > -1:
-            trans[7] = match[1]
-            trans[8] = match[2]
-            alwaysShow = match[3]
+        if trans[4].lower().find(match[1].lower()) > -1:
+            trans[7] = match[2]
+            trans[8] = match[3]
+            trans[9] = match[0]
+            alwaysShow = match[4]
             if alwaysShow == 1:
                 isMatched = False
             else:
@@ -98,6 +151,9 @@ def categorizeTransaction(trans):
 def processBankStatement(data, schema):
     global dbConn, dbCur
     entries = []
+    
+    for row in dbCur.execute('SELECT COALESCE(MAX(id)+1, 0) FROM matches'):
+        matchesLen = row[0]
     for entry in data:
         curEntry = []
         selEntry = []
@@ -132,6 +188,12 @@ def processBankStatement(data, schema):
         curEntry.append(-999)
         curEntry.append(-999)
         
+        # Add defalut values for keyword_id [9]
+        curEntry.append(-999)
+        
+        # Add defalut value for notes [10]
+        curEntry.append('')
+        
         # Add the curEntry to the entries list
         entries.append(curEntry)
         
@@ -142,7 +204,7 @@ def processBankStatement(data, schema):
                 while result['isMatched'] == False:
                     result = queryUserForCategory(curEntry, result['alwaysShow'])
                 curEntry = result['trans']
-                dbCur.execute("INSERT INTO purchases (year, month, day, check_num, description, debit, credit, category_id, subcategory_id) VALUES (?,?,?,?,?,?,?,?,?)", curEntry)# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
+                dbCur.execute("INSERT INTO purchases (year, month, day, check_num, description, debit, credit, category_id, subcategory_id, match_id, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)", curEntry)# + curEntry[0] + ", " + curEntry[1] + ", " + curEntry[2] + ", " + curEntry[3] + ", \"" + curEntry[4] + "\", " + curEntry[5] + ", " + curEntry[6] +")")
                 dbConn.commit()
                 
                 
@@ -169,16 +231,17 @@ def setupDatabase(dontReset=True):
     subcategories = readInCsv('subcategories.csv')
     createAllCategoriesTable(categories, subcategories)
     matches = readInCsv('category-transaction_matching.csv')
-    os.chdir('../../.db')
+    os.chdir('../../' + setupMoney.dbFolder)
     if dontReset == False and os.path.exists(setupMoney.dbName):
         os.remove(setupMoney.dbName)
     setupMoney.setupDatabase(categories, subcategories, matches, dontReset)
-    dbConn = sqlite3.connect('transactions.db')
+    dbConn = sqlite3.connect(setupMoney.dbName)
     dbCur = dbConn.cursor()
 
 parser = OptionParser()
 parser.add_option("-r", "--reset", action="store_false", default=True, help="reset the database and recategorize based on the updated CSV files")
 parser.add_option("-s", "--setup", dest="setupPath", help="Setup the folder structure for the Money_Talks application", metavar="SETUP")
+parser.add_option("-e", "--export", action="store_true", default=False, help="Export the data (as .json) for use in an HTML product into the 'Export' folder", metavar="SETUP")
 
 options, args = parser.parse_args()
 
@@ -187,25 +250,32 @@ if options.setupPath != None:
     print "Setting up 'Money Talks' folder structure . . ."
     setupMoney.createFolderStructure(options.setupPath)
     print "Complete: Folder structure created in " + os.path.join(options.setupPath, setupMoney.appFolder)
-else:
-    print "Updating based on user settings . . . "
+elif len(args) == 1:
+    basePath = args[0];
     
-    # Read in the various tables and replace the tables in the database with them
-    os.chdir("C:/Users/Tannerism/Documents/Money_Talks/Expenses/Bank_Statements/setup")
-    setupDatabase(options.reset)
-    os.chdir('../Bank_Statements/setup')
-    print "Reading in your bank statements . . . "
-    # Read in the bank statement and start categorizing
-    bankSchema = readInCsv('banks.csv')
-    os.chdir('../')
-    statements = [ f for f in listdir(os.getcwd()) if isfile(join(os.getcwd(),f)) ]
-    for indvStat in statements:
-        for bank in bankSchema:
-            if indvStat.lower().find(bank[0].lower()) > -1:
-                statementCont = readInCsv(indvStat)
-                # Now iterate through the statement and add it to the database
-                processBankStatement(statementCont, bank)
-    
-    # Prompt user if it doesn't know where to put something
-    
-    print "Money Talks is Complete"
+    if options.export == True:
+        os.chdir(os.path.join(basePath, setupMoney.expFolder, setupMoney.dbFolder))
+        dbConn = sqlite3.connect(setupMoney.dbName)
+        dbCur = dbConn.cursor()
+        exportJson()
+    else:
+        os.chdir(os.path.join(basePath, setupMoney.expFolder, setupMoney.bankStateFolder, setupMoney.statementSetupFolder))
+        print "Updating based on user settings . . . "
+        # Read in the various tables and replace the tables in the database with them
+        setupDatabase(options.reset)
+        os.chdir('../Bank_Statements/setup')
+        print "Reading in your bank statements . . . "
+        # Read in the bank statement and start categorizing
+        bankSchema = readInCsv('banks.csv')
+        os.chdir('../')
+        statements = [ f for f in listdir(os.getcwd()) if isfile(join(os.getcwd(),f)) ]
+        for indvStat in statements:
+            for bank in bankSchema:
+                if indvStat.lower().find(bank[0].lower()) > -1:
+                    statementCont = readInCsv(indvStat)
+                    # Now iterate through the statement and add it to the database
+                    processBankStatement(statementCont, bank)
+
+        # Prompt user if it doesn't know where to put something
+
+        print "Money Talks is Complete"
