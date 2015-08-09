@@ -32,8 +32,51 @@ def readInCsv(csvFilePath):
     return rows
 
 def exportJson():
+    matches = {}
+    categories = {}
+    subCategories = {}
+    purchases = []
+    
+    for row in dbCur.execute("SELECT * FROM matches"):
+        matches[row[0]] = row[1]
+#        print row[1]
+#    print matches
+    
+    for row in dbCur.execute("SELECT * FROM categories"):
+        categories[row[0]] = row[1]
+#        print row
+#    print categories
+#    print matches
+    
+    for row in dbCur.execute("SELECT * FROM subcategories"):
+        subCategories[row[0]] = row[2]
+#        print row
+#    print subCategories
+    
     for row in dbCur.execute("SELECT * FROM purchases"):
-        print row
+#        print row
+        transObj = {}
+        transObj['id'] = row[0]
+        transObj['year'] = row[1]
+        transObj['month'] = row[2]
+        transObj['day'] = row[3]
+        transObj['check_num'] = row[4]
+        transObj['description'] = row[5]
+        transObj['debit'] = row[6]
+        transObj['credit'] = row[7]
+        transObj['category'] = categories[row[8]]
+        try:
+            transObj['subcategory'] = subCategories[row[9]]
+        except:
+            transObj['subcategory'] = ''
+        try:
+            transObj['match'] = matches[row[10]]
+        except:
+            transObj['match'] = ''
+        transObj['notes'] = row[11]
+#        print transObj
+        purchases.append(transObj)
+    print purchases
 
 def formatTransactionForPrint(trans):
     transStr = ""
